@@ -22,6 +22,14 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.sql.Connection;
 import java.util.Date;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
@@ -49,6 +57,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             @Override
             public void onClick(View v) {
                 bEP.setText(R.string.bring_me_back);
+                sendApi(49.7848791,24.328614,50.0571807,19.9497443);
             }
         };
 
@@ -111,25 +120,55 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
-        mMap.setMapType(1);
         mMap.setMyLocationEnabled(true);
-        mMap.setMapType(GoogleMap.MAP_TYPE_SATELLITE);
+        mMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
         mMap.getUiSettings().setZoomControlsEnabled(true);
 
     }
 
-    private void apiJson(double lat1, double lon1, double lat2, double lon2){
-        double latA = lat1;
-        double lonA = lon1;
-        double latB = lat2;
-        double lonB = lon2;
+    private void sendApi(double latA, double lonA, double latB, double lonB){
+        String www = "https://maps.googleapis.com/maps/api/directions/json?";
+        String origin = "origin=" + latA + "," + lonA;
+        String dest = "&destination=" + latB + "," + lonB;
 
-        String url = "http://maps.googleapis.com/maps/api/directions/json?";
+        HttpURLConnection connection = null;
+        BufferedReader reader = null;
 
-        
+        try {
+            URL url = new URL(www + origin + dest + "&key=" + getString(R.string.direction_api_key));
+            connection = (HttpURLConnection) url.openConnection();
+            connection.connect();
+
+            InputStream stream = connection.getInputStream();
+
+            reader = new BufferedReader(new InputStreamReader(stream));
+
+            StringBuffer buffer = new StringBuffer();
+
+            String line;
+            while ((line = reader.readLine()) != null) {
+                buffer.append(line);
+            }
+            tvLat.setText(buffer.toString());
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            if (connection != null){
+                connection.disconnect();
+            }
+            try {
+                if(reader != null) {
+                    reader.close();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+
     }
-
-
 
 
 }
