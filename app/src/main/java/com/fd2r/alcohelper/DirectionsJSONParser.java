@@ -1,8 +1,5 @@
 package com.fd2r.alcohelper;
 
-/**
- * Created by roman on 08.12.15.
- */
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
