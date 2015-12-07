@@ -29,4 +29,12 @@
             android:text="@string/entry_point"
             android:padding="10dp"/>
 
+        <Button
+            android:id="@+id/bBringMeBack"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom|center_horizontal"
+            android:text="@string/bring_me_back"
+            android:padding="10dp"/>
+
 </fragment>
