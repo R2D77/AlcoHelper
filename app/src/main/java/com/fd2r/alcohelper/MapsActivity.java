@@ -2,12 +2,11 @@ package com.fd2r.alcohelper;
 
 import android.Manifest;
 import android.content.pm.PackageManager;
-import android.location.Criteria;
+import android.graphics.Color;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
-import android.location.LocationManager;
-import android.net.Uri;
+import android.os.AsyncTask;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
@@ -15,12 +14,18 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
+import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.PolylineOptions;
+
+import org.json.JSONObject;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -29,16 +34,20 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.sql.Connection;
-import java.util.Date;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
 
     private GoogleMap mMap;
     Button bEP;
+    Button bBMB;
     TextView tvLat;
     TextView tvLon;
     private LocationManager locationManager;
+    double Lat, startLatitude, finishLatitude;
+    double Lon, startLongitude, finishLongitude;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -50,14 +59,31 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mapFragment.getMapAsync(this);
 
         bEP = (Button) findViewById(R.id.bEntryPoint);
+        bBMB = (Button) findViewById(R.id.bBringMeBack);
         tvLat = (TextView) findViewById(R.id.tvLat);
         tvLon = (TextView) findViewById(R.id.tvLon);
+        bBMB.setEnabled(false);
+        bBMB.setVisibility(View.GONE);
+
 
         View.OnClickListener ocl = new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                bEP.setText(R.string.bring_me_back);
-                sendApi(49.7848791,24.328614,50.0571807,19.9497443);
+                switch (v.getId()){
+                    case R.id.bEntryPoint:
+                        bBMB.setEnabled(true);
+                        bBMB.setVisibility(View.VISIBLE);
+                        startLatitude=Lat;
+                        startLongitude=Lon;
+                        bEP.setEnabled(false);
+                        bEP.setVisibility(View.GONE);
+                        break;
+                    case R.id.bBringMeBack:
+                        finishLatitude=Lat;
+                        finishLongitude=Lon;
+                        sendApi(startLatitude, startLongitude, finishLatitude, finishLongitude);
+                        break;
+                }
             }
         };
 
@@ -85,9 +111,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private LocationListener locationListener =new LocationListener() {
         @Override
         public void onLocationChanged(Location location) {
+            Lat = location.getLatitude();
+            Lon = location.getLongitude();
             tvLat.setText("Lat: " + location.getLatitude());
-            tvLon.setText("Lon: " + location.getLongitude());
-
         }
 
         @Override
@@ -149,7 +175,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             while ((line = reader.readLine()) != null) {
                 buffer.append(line);
             }
-            tvLat.setText(buffer.toString());
+            tvLon.setText(buffer.toString());
+
+            ParserTask parserTask = new ParserTask();
+            parserTask.execute(buffer.toString());
+
         } catch (MalformedURLException e) {
             e.printStackTrace();
         } catch (IOException e) {
@@ -166,9 +196,64 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 e.printStackTrace();
             }
         }
-
-
     }
 
+    private class ParserTask extends AsyncTask<String, Integer, List<List<HashMap<String,String>>> > {
+
+        // Parsing the data in non-ui thread
+        @Override
+        protected List<List<HashMap<String, String>>> doInBackground(String... jsonData) {
+
+            JSONObject jObject;
+            List<List<HashMap<String, String>>> routes = null;
+
+            try{
+                jObject = new JSONObject(jsonData[0]);
+                DirectionsJSONParser parser = new DirectionsJSONParser();
+
+                // Starts parsing data
+                routes = parser.parse(jObject);
+            }catch(Exception e){
+                e.printStackTrace();
+            }
+            return routes;
+        }
+
+        // Executes in UI thread, after the parsing process
+        @Override
+        protected void onPostExecute(List<List<HashMap<String, String>>> result) {
+
+            ArrayList<LatLng> points = null;
+            PolylineOptions lineOptions = null;
+
+            // Traversing through all the routes
+            for(int i=0;i<result.size();i++){
+                points = new ArrayList<LatLng>();
+                lineOptions = new PolylineOptions();
+
+                // Fetching i-th route
+                List<HashMap<String, String>> path = result.get(i);
+
+                // Fetching all the points in i-th route
+                for(int j=0;j<path.size();j++){
+                    HashMap<String,String> point = path.get(j);
+
+                    double lat = Double.parseDouble(point.get("lat"));
+                    double lng = Double.parseDouble(point.get("lng"));
+                    LatLng position = new LatLng(lat, lng);
+
+                    points.add(position);
+                }
+
+                // Adding all the points in the route to LineOptions
+                lineOptions.addAll(points);
+                lineOptions.width(2);
+                lineOptions.color(Color.RED);
+            }
+
+            // Drawing polyline in the Google Map for the i-th route
+            mMap.addPolyline(lineOptions);
+        }
+    }
 
 }
