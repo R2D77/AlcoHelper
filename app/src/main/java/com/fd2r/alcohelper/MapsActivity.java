@@ -43,8 +43,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private GoogleMap mMap;
     Button bEP;
     Button bBMB;
-    TextView tvLat;
-    TextView tvLon;
+    TextView tvDir;
+    TextView tv1;
+    TextView tv2;
+    TextView tv3;
+    TextView tv4;
     private LocationManager locationManager;
     double Lat, startLatitude, finishLatitude;
     double Lon, startLongitude, finishLongitude;
@@ -60,11 +63,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         bEP = (Button) findViewById(R.id.bEntryPoint);
         bBMB = (Button) findViewById(R.id.bBringMeBack);
-        tvLat = (TextView) findViewById(R.id.tvLat);
-        tvLon = (TextView) findViewById(R.id.tvLon);
+        tvDir = (TextView) findViewById(R.id.tvDir);
+        tv1 = (TextView) findViewById(R.id.tv1);
+        tv2 = (TextView) findViewById(R.id.tv2);
+        tv3 = (TextView) findViewById(R.id.tv3);
+        tv4 = (TextView) findViewById(R.id.tv4);
         bBMB.setEnabled(false);
         bBMB.setVisibility(View.GONE);
-
 
         View.OnClickListener ocl = new View.OnClickListener() {
             @Override
@@ -75,13 +80,22 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                         bBMB.setVisibility(View.VISIBLE);
                         startLatitude=Lat;
                         startLongitude=Lon;
+                        tv1.setText("LatS: " + startLatitude);
+                        tv2.setText("LonS: " + startLongitude);
                         bEP.setEnabled(false);
                         bEP.setVisibility(View.GONE);
                         break;
                     case R.id.bBringMeBack:
                         finishLatitude=Lat;
                         finishLongitude=Lon;
+                        tv3.setText("LatS: " + finishLatitude);
+                        tv4.setText("LonS: " + finishLongitude);
+
                         sendApi(startLatitude, startLongitude, finishLatitude, finishLongitude);
+
+                        //ternopil-krakiw
+                        //sendApi(49.531643, 25.604636, 50.021817, 19.827423);
+
                         break;
                 }
             }
@@ -89,6 +103,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
         bEP.setOnClickListener(ocl);
+        bBMB.setOnClickListener(ocl);
     }
 
     @Override
@@ -111,9 +126,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private LocationListener locationListener =new LocationListener() {
         @Override
         public void onLocationChanged(Location location) {
-            Lat = location.getLatitude();
-            Lon = location.getLongitude();
-            tvLat.setText("Lat: " + location.getLatitude());
+            if(location.getAccuracy() <= 10) {
+                Lat = location.getLatitude();
+                Lon = location.getLongitude();
+            }
+            tvDir.setText("Accuracy: " + location.getAccuracy());
         }
 
         @Override
@@ -175,7 +192,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             while ((line = reader.readLine()) != null) {
                 buffer.append(line);
             }
-            tvLon.setText(buffer.toString());
+            //tvDir.setText(buffer.toString());
 
             ParserTask parserTask = new ParserTask();
             parserTask.execute(buffer.toString());

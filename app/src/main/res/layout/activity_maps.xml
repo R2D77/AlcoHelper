@@ -7,19 +7,44 @@
     android:layout_height="match_parent"
     tools:context="com.fd2r.alcohelper.MapsActivity">
 
-        <TextView
-            android:id="@+id/tvLat"
+        <LinearLayout
+            android:orientation="vertical"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="bottom|left"
-            android:text="Lat"/>
+            android:gravity="bottom|right">
 
-        <TextView
-            android:id="@+id/tvLon"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="bottom|right"
-            android:text="Lon"/>
+            <TextView
+                android:id="@+id/tvDir"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Dir"/>
+
+            <TextView
+                android:id="@+id/tv1"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="LatS"/>
+
+            <TextView
+                android:id="@+id/tv2"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="LonS"/>
+
+            <TextView
+                android:id="@+id/tv3"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="LatF"/>
+
+            <TextView
+                android:id="@+id/tv4"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="LonF"/>
+
+        </LinearLayout>
+
 
         <Button
             android:id="@+id/bEntryPoint"
