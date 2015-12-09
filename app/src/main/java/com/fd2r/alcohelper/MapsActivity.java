@@ -10,6 +10,8 @@ import android.os.AsyncTask;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
@@ -69,6 +71,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         tv3 = (TextView) findViewById(R.id.tv3);
         tv4 = (TextView) findViewById(R.id.tv4);
         bBMB.setEnabled(false);
+        bEP.setEnabled(false);
         bBMB.setVisibility(View.GONE);
 
         View.OnClickListener ocl = new View.OnClickListener() {
@@ -91,10 +94,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                         tv3.setText("LatS: " + finishLatitude);
                         tv4.setText("LonS: " + finishLongitude);
 
-                        sendApi(startLatitude, startLongitude, finishLatitude, finishLongitude);
+                        //sendApi(startLatitude, startLongitude, finishLatitude, finishLongitude);
 
                         //ternopil-krakiw
-                        //sendApi(49.531643, 25.604636, 50.021817, 19.827423);
+                        sendApi(49.531643, 25.604636, 50.021817, 19.827423);
 
                         break;
                 }
@@ -126,9 +129,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private LocationListener locationListener =new LocationListener() {
         @Override
         public void onLocationChanged(Location location) {
-            if(location.getAccuracy() <= 10) {
+            if(location.getAccuracy() <= 50) {
                 Lat = location.getLatitude();
                 Lon = location.getLongitude();
+                bEP.setEnabled(true);
             }
             tvDir.setText("Accuracy: " + location.getAccuracy());
         }
@@ -166,19 +170,20 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mMap.setMyLocationEnabled(true);
         mMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
         mMap.getUiSettings().setZoomControlsEnabled(true);
-
     }
 
     private void sendApi(double latA, double lonA, double latB, double lonB){
-        String www = "https://maps.googleapis.com/maps/api/directions/json?";
-        String origin = "origin=" + latA + "," + lonA;
+        String www = "https://maps.googleapis.com/maps/api/directions/json";
+        String origin = "?origin=" + latA + "," + lonA;
         String dest = "&destination=" + latB + "," + lonB;
+        String mode = "&mode=walking";
+        String key = "&key=" + getString(R.string.direction_api_key);
 
         HttpURLConnection connection = null;
         BufferedReader reader = null;
 
         try {
-            URL url = new URL(www + origin + dest + "&key=" + getString(R.string.direction_api_key));
+            URL url = new URL(www + origin + dest + mode + key);
             connection = (HttpURLConnection) url.openConnection();
             connection.connect();
 
@@ -264,7 +269,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
                 // Adding all the points in the route to LineOptions
                 lineOptions.addAll(points);
-                lineOptions.width(2);
+                lineOptions.width(5);
                 lineOptions.color(Color.RED);
             }
 
@@ -272,5 +277,21 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             mMap.addPolyline(lineOptions);
         }
     }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu){
+        getMenuInflater().inflate(R.menu.context_menu, menu);
+        return super.onCreateOptionsMenu(menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item){
+        tvDir.setText(item.toString());
+        return super.onOptionsItemSelected(item);
+    }
+
+
+
+
 
 }

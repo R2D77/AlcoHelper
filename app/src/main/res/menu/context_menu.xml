@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+        android:layout_height="wrap_content"
+        android:layout_width="wrap_content">
+    <item
+        android:id="@+id/option1"
+        android:icon="@android:drawable/stat_sys_phone_call"
+        android:title="Call taxi"/>
+    <item
+        android:id="@+id/option2"
+        android:icon="@android:drawable/ic_dialog_map"
+        android:title="Entry point"/>
+    <item
+        android:id="@+id/option3"
+        android:icon="@android:drawable/ic_menu_edit"
+        android:title="Taxi number"/>
+</menu>
