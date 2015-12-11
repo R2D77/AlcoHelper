@@ -1,6 +1,8 @@
 package com.fd2r.alcohelper;
 
 import android.Manifest;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
@@ -18,15 +20,10 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
-import com.google.android.gms.maps.CameraUpdate;
-import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
-import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.LatLngBounds;
-import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.PolylineOptions;
 
 import org.json.JSONObject;
@@ -47,13 +44,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private GoogleMap mMap;
     Button bEP;
     Button bBMB;
-    Button bGPS;
     TextView tvDir;
     TextView tv1;
     TextView tv2;
     TextView tv3;
     TextView tv4;
-    String link;
+    String link = null;
     private LocationManager locationManager;
     double Lat, startLatitude, finishLatitude;
     double Lon, startLongitude, finishLongitude;
@@ -98,16 +94,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                         tv3.setText("LatS: " + finishLatitude);
                         tv4.setText("LonS: " + finishLongitude);
 
-                        //sendApi(startLatitude, startLongitude, finishLatitude, finishLongitude);
-                        //ternopil-krakiw
-                        //sendApi(49.531643, 25.604636, 50.021817, 19.827423);
-
-                        MyTask myTask = new MyTask();
-                        //myTask.execute(49.531643, 25.604636, 50.021817, 19.827423);
-                        myTask.execute(startLatitude, startLongitude, finishLatitude, finishLongitude);
-
-                        ParserTask parserTask = new ParserTask();
-                        parserTask.execute(link);
+                        SendApi sendApi = new SendApi();
+                        sendApi.execute();
 
                         break;
                 }
@@ -116,34 +104,28 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
 
-
-        //???????????
-        if(!locationManager.isProviderEnabled(android.location.LocationManager.GPS_PROVIDER ))
-        {
-           // startActivityForResult(new Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS), 0);
-           // Intent myIntent = new Intent( Settings.ACTION_LOCATION_SOURCE_SETTINGS);
-           // startActivity(myIntent);
-
-            Intent intent = new Intent("android.location.GPS_ENABLED_CHANGE");
-            intent.putExtra("enabled", true);
-            sendBroadcast(intent);
-
+        if(!locationManager.isProviderEnabled(android.location.LocationManager.GPS_PROVIDER )){
+            AlertDialog.Builder alertDialog = new AlertDialog.Builder(MapsActivity.this);
+            alertDialog.setTitle("GPS is settings");
+            alertDialog.setMessage("GPS is not enabled. Do you want to go to settings menu?");
+            alertDialog.setPositiveButton("Settings", new DialogInterface.OnClickListener() {
+                public void onClick(DialogInterface dialog, int which) {
+                    startActivityForResult(new Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS), 0);
+                    Intent myIntent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+                    startActivity(myIntent);
+                }
+            });
+            alertDialog.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                public void onClick(DialogInterface dialog, int which) {
+                    dialog.cancel();
+                }
+            });
+            alertDialog.show();
         }
 
         bEP.setOnClickListener(ocl);
         bBMB.setOnClickListener(ocl);
     }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        Intent intent = new Intent("android.location.GPS_ENABLED_CHANGE");
-        intent.putExtra("enabled", false);
-        sendBroadcast(intent);
-    }
-
-
-
 
     @Override
     protected void onResume() {
@@ -165,7 +147,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private LocationListener locationListener =new LocationListener() {
         @Override
         public void onLocationChanged(Location location) {
-            if(location.getAccuracy() <= 50) {
+            if(location.getAccuracy() <= 5000) {    //!!!!!!!!!!!!!!!!!!
                 Lat = location.getLatitude();
                 Lon = location.getLongitude();
                 bEP.setEnabled(true);
@@ -206,57 +188,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mMap.getUiSettings().setZoomControlsEnabled(true);
     }
 
-
-    //delete
-    private void sendApi(double latA, double lonA, double latB, double lonB){
-        String www = "https://maps.googleapis.com/maps/api/directions/json";
-        String origin = "?origin=" + latA + "," + lonA;
-        String dest = "&destination=" + latB + "," + lonB;
-        String mode = "&mode=walking";
-        String key = "&key=" + getString(R.string.direction_api_key);
-
-        HttpURLConnection connection = null;
-        BufferedReader reader = null;
-
-        try {
-            URL url = new URL(www + origin + dest + mode + key);
-            connection = (HttpURLConnection) url.openConnection();
-            connection.connect();
-
-            InputStream stream = connection.getInputStream();
-
-            reader = new BufferedReader(new InputStreamReader(stream));
-
-            StringBuffer buffer = new StringBuffer();
-
-            String line;
-            while ((line = reader.readLine()) != null) {
-                buffer.append(line);
-            }
-            //tvDir.setText(buffer.toString());
-
-            link = buffer.toString();
-
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            if (connection != null){
-                connection.disconnect();
-            }
-            try {
-                if(reader != null) {
-                    reader.close();
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-    }    //--------------------------
-
     private class ParserTask extends AsyncTask<String, Integer, List<List<HashMap<String,String>>> > {
-
         // Parsing the data in non-ui thread
         @Override
         protected List<List<HashMap<String, String>>> doInBackground(String... jsonData) {
@@ -325,7 +257,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         return super.onOptionsItemSelected(item);
     }
 
-    class MyTask extends AsyncTask<Double, Void, Void> {
+    class SendApi extends AsyncTask<Void, Void, Void> {
 
         @Override
         protected void onPreExecute() {
@@ -333,15 +265,15 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }
 
         @Override
-        protected Void doInBackground(Double... params) {
+        protected Void doInBackground(Void... params) {
+            startLatitude = 49.531643;
+            startLongitude = 25.604636;
+            finishLatitude = 50.021817;
+            finishLongitude = 19.827423;
 
-            double latA = params[0];
-            double lonA = params[1];
-            double latB = params[2];
-            double lonB = params[3];
             String www = "https://maps.googleapis.com/maps/api/directions/json";
-            String origin = "?origin=" + latA + "," + lonA;
-            String dest = "&destination=" + latB + "," + lonB;
+            String origin = "?origin=" + startLatitude + "," + startLongitude;
+            String dest = "&destination=" + finishLatitude + "," + finishLongitude;
             String mode = "&mode=walking";
             String key = "&key=" + getString(R.string.direction_api_key);
 
@@ -363,7 +295,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 while ((line = reader.readLine()) != null) {
                     buffer.append(line);
                 }
-                //tvDir.setText(buffer.toString());
+
+                link = buffer.toString();
 
             } catch (MalformedURLException e) {
                 e.printStackTrace();
@@ -387,9 +320,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         @Override
         protected void onPostExecute(Void result) {
             super.onPostExecute(result);
+            ParserTask parserTask = new ParserTask();
+            parserTask.execute(link);
         }
     }
-
-
 
 }
