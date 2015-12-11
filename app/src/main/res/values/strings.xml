@@ -1,6 +1,7 @@
 <resources>
     <string name="app_name">AlcoHelper</string>
     <string name="title_activity_maps">Map</string>
+    <string name="gps_signal">Waiting for signal from GPS</string>
     <string name="entry_point">Entry Point</string>
     <string name="bring_me_back">Bring me back</string>
     <string name="direction_api_key">AIzaSyAnKE2p8XzDQN-GvCvRIiAR-o-wfmH2MOY</string>

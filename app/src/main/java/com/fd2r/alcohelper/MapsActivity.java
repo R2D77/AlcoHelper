@@ -1,12 +1,14 @@
 package com.fd2r.alcohelper;
 
 import android.Manifest;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.AsyncTask;
+import android.provider.Settings;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
@@ -45,11 +47,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private GoogleMap mMap;
     Button bEP;
     Button bBMB;
+    Button bGPS;
     TextView tvDir;
     TextView tv1;
     TextView tv2;
     TextView tv3;
     TextView tv4;
+    String link;
     private LocationManager locationManager;
     double Lat, startLatitude, finishLatitude;
     double Lon, startLongitude, finishLongitude;
@@ -95,9 +99,15 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                         tv4.setText("LonS: " + finishLongitude);
 
                         //sendApi(startLatitude, startLongitude, finishLatitude, finishLongitude);
-
                         //ternopil-krakiw
-                        sendApi(49.531643, 25.604636, 50.021817, 19.827423);
+                        //sendApi(49.531643, 25.604636, 50.021817, 19.827423);
+
+                        MyTask myTask = new MyTask();
+                        //myTask.execute(49.531643, 25.604636, 50.021817, 19.827423);
+                        myTask.execute(startLatitude, startLongitude, finishLatitude, finishLongitude);
+
+                        ParserTask parserTask = new ParserTask();
+                        parserTask.execute(link);
 
                         break;
                 }
@@ -105,9 +115,35 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         };
 
         locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
+
+
+        //???????????
+        if(!locationManager.isProviderEnabled(android.location.LocationManager.GPS_PROVIDER ))
+        {
+           // startActivityForResult(new Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS), 0);
+           // Intent myIntent = new Intent( Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+           // startActivity(myIntent);
+
+            Intent intent = new Intent("android.location.GPS_ENABLED_CHANGE");
+            intent.putExtra("enabled", true);
+            sendBroadcast(intent);
+
+        }
+
         bEP.setOnClickListener(ocl);
         bBMB.setOnClickListener(ocl);
     }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        Intent intent = new Intent("android.location.GPS_ENABLED_CHANGE");
+        intent.putExtra("enabled", false);
+        sendBroadcast(intent);
+    }
+
+
+
 
     @Override
     protected void onResume() {
@@ -153,8 +189,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }
     };
 
-
-
     /**
      * Manipulates the map once available.
      * This callback is triggered when the map is ready to be used.
@@ -172,6 +206,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mMap.getUiSettings().setZoomControlsEnabled(true);
     }
 
+
+    //delete
     private void sendApi(double latA, double lonA, double latB, double lonB){
         String www = "https://maps.googleapis.com/maps/api/directions/json";
         String origin = "?origin=" + latA + "," + lonA;
@@ -199,8 +235,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             }
             //tvDir.setText(buffer.toString());
 
-            ParserTask parserTask = new ParserTask();
-            parserTask.execute(buffer.toString());
+            link = buffer.toString();
 
         } catch (MalformedURLException e) {
             e.printStackTrace();
@@ -218,7 +253,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 e.printStackTrace();
             }
         }
-    }
+    }    //--------------------------
 
     private class ParserTask extends AsyncTask<String, Integer, List<List<HashMap<String,String>>> > {
 
@@ -279,18 +314,81 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
     @Override
-    public boolean onCreateOptionsMenu(Menu menu){
+    public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.context_menu, menu);
         return super.onCreateOptionsMenu(menu);
     }
 
     @Override
-    public boolean onOptionsItemSelected(MenuItem item){
+    public boolean onOptionsItemSelected(MenuItem item) {
         tvDir.setText(item.toString());
         return super.onOptionsItemSelected(item);
     }
 
+    class MyTask extends AsyncTask<Double, Void, Void> {
 
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+        }
+
+        @Override
+        protected Void doInBackground(Double... params) {
+
+            double latA = params[0];
+            double lonA = params[1];
+            double latB = params[2];
+            double lonB = params[3];
+            String www = "https://maps.googleapis.com/maps/api/directions/json";
+            String origin = "?origin=" + latA + "," + lonA;
+            String dest = "&destination=" + latB + "," + lonB;
+            String mode = "&mode=walking";
+            String key = "&key=" + getString(R.string.direction_api_key);
+
+            HttpURLConnection connection = null;
+            BufferedReader reader = null;
+
+            try {
+                URL url = new URL(www + origin + dest + mode + key);
+                connection = (HttpURLConnection) url.openConnection();
+                connection.connect();
+
+                InputStream stream = connection.getInputStream();
+
+                reader = new BufferedReader(new InputStreamReader(stream));
+
+                StringBuffer buffer = new StringBuffer();
+
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    buffer.append(line);
+                }
+                //tvDir.setText(buffer.toString());
+
+            } catch (MalformedURLException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            } finally {
+                if (connection != null){
+                    connection.disconnect();
+                }
+                try {
+                    if(reader != null) {
+                        reader.close();
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void result) {
+            super.onPostExecute(result);
+        }
+    }
 
 
 
