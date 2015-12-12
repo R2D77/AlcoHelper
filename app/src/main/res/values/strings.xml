@@ -5,4 +5,7 @@
     <string name="entry_point">Entry Point</string>
     <string name="bring_me_back">Bring me back</string>
     <string name="direction_api_key">AIzaSyAnKE2p8XzDQN-GvCvRIiAR-o-wfmH2MOY</string>
+    <string name="menu_call_taxi">Call taxi</string>
+    <string name="menu_entry_point_address">Entry point</string>
+    <string name="menu_edit_taxi_number">Taxi number</string>
 </resources>

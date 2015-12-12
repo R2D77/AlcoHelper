@@ -5,15 +5,15 @@
     <item
         android:id="@+id/option1"
         android:icon="@android:drawable/stat_sys_phone_call"
-        android:title="Call taxi"/>
+        android:title="@string/menu_call_taxi"/>
     <item
         android:id="@+id/option2"
         android:icon="@android:drawable/ic_dialog_map"
-        android:title="Entry point"/>
+        android:title="@string/menu_entry_point_address"/>
     <item
         android:id="@+id/option3"
         android:icon="@android:drawable/ic_menu_edit"
-        android:title="Taxi number"/>
+        android:title="@string/menu_edit_taxi_number"/>
     <item
         android:id="@+id/option4"
         android:icon="@android:drawable/ic_menu_agenda"

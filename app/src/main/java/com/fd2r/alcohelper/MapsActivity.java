@@ -6,6 +6,8 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
+import android.location.Address;
+import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
@@ -24,6 +26,7 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.PolylineOptions;
 
 import org.json.JSONObject;
@@ -38,6 +41,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
 
@@ -53,6 +57,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private LocationManager locationManager;
     double Lat, startLatitude, finishLatitude;
     double Lon, startLongitude, finishLongitude;
+    String geo_address, geo_city, geo_state, geo_country;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -87,7 +92,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                         tv2.setText("LonS: " + startLongitude);
                         bEP.setEnabled(false);
                         bEP.setVisibility(View.GONE);
+
+                        AddressEP adr = new AddressEP();
+                        adr.execute();
+
                         break;
+
                     case R.id.bBringMeBack:
                         finishLatitude=Lat;
                         finishLongitude=Lon;
@@ -106,7 +116,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         if(!locationManager.isProviderEnabled(android.location.LocationManager.GPS_PROVIDER )){
             AlertDialog.Builder alertDialog = new AlertDialog.Builder(MapsActivity.this);
-            alertDialog.setTitle("GPS is settings");
+            alertDialog.setTitle("Check GPS settings");
             alertDialog.setMessage("GPS is not enabled. Do you want to go to settings menu?");
             alertDialog.setPositiveButton("Settings", new DialogInterface.OnClickListener() {
                 public void onClick(DialogInterface dialog, int which) {
@@ -245,18 +255,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }
     }
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.context_menu, menu);
-        return super.onCreateOptionsMenu(menu);
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        tvDir.setText(item.toString());
-        return super.onOptionsItemSelected(item);
-    }
-
     class SendApi extends AsyncTask<Void, Void, Void> {
 
         @Override
@@ -323,6 +321,75 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             ParserTask parserTask = new ParserTask();
             parserTask.execute(link);
         }
+    }
+
+    class AddressEP extends AsyncTask<Void, Void, Void> {
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+        }
+
+        @Override
+        protected Void doInBackground(Void... params) {
+            Geocoder geocoder;
+            List<Address> addresses;
+            geocoder = new Geocoder(MapsActivity.this, Locale.getDefault());
+
+            try {
+                addresses = geocoder.getFromLocation(startLatitude, startLongitude, 1); // Here 1 represent max location result to returned, by documents it recommended 1 to 5
+                geo_address = addresses.get(0).getAddressLine(0); // If any additional address line present than only, check with max available address lines by getMaxAddressLineIndex()
+                geo_city = addresses.get(0).getLocality();
+                geo_state = addresses.get(0).getAdminArea();
+                geo_country = addresses.get(0).getCountryName();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void result) {
+            super.onPostExecute(result);
+
+            LatLng latLng = new LatLng(startLatitude, startLongitude);
+            MarkerOptions markerOptions = new MarkerOptions()
+                    .position(latLng)
+                    .title(geo_address);
+            mMap.addMarker(markerOptions);
+            tvDir.setText(geo_address + "\n" + geo_city + "\n" + geo_state + "\n" + geo_country);
+        }
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.context_menu, menu);
+        return super.onCreateOptionsMenu(menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.option1:
+                break;
+
+            case R.id.option2:
+                AlertDialog.Builder alertDialog = new AlertDialog.Builder(MapsActivity.this);
+                alertDialog.setTitle(R.string.entry_point);
+                alertDialog.setMessage(geo_address + "\n" + geo_city + "\n" + geo_state + "\n" + geo_country);
+                alertDialog.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.cancel();
+                    }
+                });
+                alertDialog.show();
+                break;
+
+            case R.id.option3:
+                break;
+        }
+        return super.onOptionsItemSelected(item);
     }
 
 }
