@@ -4,6 +4,7 @@ import android.Manifest;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.location.Address;
@@ -11,15 +12,18 @@ import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.provider.Settings;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
+import android.text.InputType;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.TextView;
 
 import com.google.android.gms.maps.GoogleMap;
@@ -58,6 +62,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     double Lat, startLatitude, finishLatitude;
     double Lon, startLongitude, finishLongitude;
     String geo_address, geo_city, geo_state, geo_country;
+    SharedPreferences sPref;
+    final String TAXI_NUMBER = "taxi number";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -372,6 +378,15 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.option1:
+                String tNumber;
+                tNumber = loadTaxiNumber();
+                if(tNumber.equals("")){
+                    alertInputNum();
+                }
+                Intent intent;
+                intent = new Intent(Intent.ACTION_DIAL);
+                intent.setData(Uri.parse("tel:" + loadTaxiNumber()));
+                startActivity(intent);
                 break;
 
             case R.id.option2:
@@ -387,9 +402,47 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 break;
 
             case R.id.option3:
+                alertInputNum();
                 break;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    void alertInputNum(){
+        AlertDialog.Builder editTaxiNumber = new AlertDialog.Builder(this);
+        editTaxiNumber.setTitle("Edit taxi number");
+        final EditText input = new EditText(this);
+        input.setInputType(InputType.TYPE_CLASS_PHONE);
+        input.setText(loadTaxiNumber());
+        editTaxiNumber.setView(input);
+        editTaxiNumber.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                if(!input.getText().toString().equals("")) {
+                    saveTaxiNumber(input.getText().toString());
+                }
+            }
+        });
+        editTaxiNumber.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.cancel();
+            }
+        });
+        editTaxiNumber.show();
+    }
+
+    public String loadTaxiNumber() {
+        sPref = getPreferences(MODE_PRIVATE);
+        String savedText = sPref.getString(TAXI_NUMBER, "");
+        return savedText;
+    }
+
+    void saveTaxiNumber(String inph) {
+        sPref = getPreferences(MODE_PRIVATE);
+        SharedPreferences.Editor ed = sPref.edit();
+        ed.putString(TAXI_NUMBER, inph);
+        ed.commit();
     }
 
 }
