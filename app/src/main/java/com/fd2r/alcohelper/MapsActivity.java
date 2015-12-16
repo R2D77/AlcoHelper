@@ -61,7 +61,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private LocationManager locationManager;
     double Lat, startLatitude, finishLatitude;
     double Lon, startLongitude, finishLongitude;
-    String geo_address, geo_city, geo_state, geo_country;
+    String geo_address, geo_city, geo_state, geo_country, test;
     SharedPreferences sPref;
     final String TAXI_NUMBER = "taxi number";
 
@@ -126,7 +126,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             alertDialog.setMessage("GPS is not enabled. Do you want to go to settings menu?");
             alertDialog.setPositiveButton("Settings", new DialogInterface.OnClickListener() {
                 public void onClick(DialogInterface dialog, int which) {
-                    startActivityForResult(new Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS), 0);
                     Intent myIntent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
                     startActivity(myIntent);
                 }
@@ -342,15 +341,17 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             List<Address> addresses;
             geocoder = new Geocoder(MapsActivity.this, Locale.getDefault());
 
-            try {
-                addresses = geocoder.getFromLocation(startLatitude, startLongitude, 1); // Here 1 represent max location result to returned, by documents it recommended 1 to 5
-                geo_address = addresses.get(0).getAddressLine(0); // If any additional address line present than only, check with max available address lines by getMaxAddressLineIndex()
-                geo_city = addresses.get(0).getLocality();
-                geo_state = addresses.get(0).getAdminArea();
-                geo_country = addresses.get(0).getCountryName();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+            do {
+                try {
+                    addresses = geocoder.getFromLocation(startLatitude, startLongitude, 1); // Here 1 represent max location result to returned, by documents it recommended 1 to 5
+                    geo_address = addresses.get(0).getAddressLine(0); // If any additional address line present than only, check with max available address lines by getMaxAddressLineIndex()
+                    geo_city = addresses.get(0).getLocality();
+                    geo_state = addresses.get(0).getAdminArea();
+                    geo_country = addresses.get(0).getCountryName();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            } while (geo_country.equals(null));
 
             return null;
         }
@@ -378,11 +379,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.option1:
-                String tNumber;
-                tNumber = loadTaxiNumber();
-                if(tNumber.equals("")){
-                    alertInputNum();
-                }
                 Intent intent;
                 intent = new Intent(Intent.ACTION_DIAL);
                 intent.setData(Uri.parse("tel:" + loadTaxiNumber()));
@@ -402,34 +398,30 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 break;
 
             case R.id.option3:
-                alertInputNum();
+                AlertDialog.Builder editTaxiNumber = new AlertDialog.Builder(this);
+                editTaxiNumber.setTitle("Edit taxi number");
+                final EditText input = new EditText(this);
+                input.setInputType(InputType.TYPE_CLASS_PHONE);
+                input.setText(loadTaxiNumber());
+                editTaxiNumber.setView(input);
+                editTaxiNumber.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        if(!input.getText().toString().equals("")) {
+                            saveTaxiNumber(input.getText().toString());
+                        }
+                    }
+                });
+                editTaxiNumber.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.cancel();
+                    }
+                });
+                editTaxiNumber.show();
                 break;
         }
         return super.onOptionsItemSelected(item);
-    }
-
-    void alertInputNum(){
-        AlertDialog.Builder editTaxiNumber = new AlertDialog.Builder(this);
-        editTaxiNumber.setTitle("Edit taxi number");
-        final EditText input = new EditText(this);
-        input.setInputType(InputType.TYPE_CLASS_PHONE);
-        input.setText(loadTaxiNumber());
-        editTaxiNumber.setView(input);
-        editTaxiNumber.setPositiveButton("OK", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                if(!input.getText().toString().equals("")) {
-                    saveTaxiNumber(input.getText().toString());
-                }
-            }
-        });
-        editTaxiNumber.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                dialog.cancel();
-            }
-        });
-        editTaxiNumber.show();
     }
 
     public String loadTaxiNumber() {
