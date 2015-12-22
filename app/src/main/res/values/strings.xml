@@ -8,4 +8,15 @@
     <string name="menu_call_taxi">Call taxi</string>
     <string name="menu_entry_point_address">Entry point</string>
     <string name="menu_edit_taxi_number">Taxi number</string>
+    <string name="drink">Drink</string>
+    <string name="ml">ml </string>
+    <string name="booz">Booz</string>
+    <string name="measure_alcohol">Enter measure of alcohol</string>
+
+    <string-array name="drinklist">
+        <item>Beer</item>
+        <item>Vine</item>
+        <item>Rum</item>
+    </string-array>
+
 </resources>

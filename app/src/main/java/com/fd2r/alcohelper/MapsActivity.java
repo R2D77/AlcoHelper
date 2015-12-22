@@ -2,6 +2,7 @@ package com.fd2r.alcohelper;
 
 import android.Manifest;
 import android.app.AlertDialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -22,8 +23,13 @@ import android.text.InputType;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.WindowManager;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.LinearLayout;
+import android.widget.Spinner;
 import android.widget.TextView;
 
 import com.google.android.gms.maps.GoogleMap;
@@ -64,6 +70,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     String geo_address, geo_city, geo_state, geo_country, test;
     SharedPreferences sPref;
     final String TAXI_NUMBER = "taxi number";
+    float boozLevel = (float) 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -162,7 +169,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private LocationListener locationListener =new LocationListener() {
         @Override
         public void onLocationChanged(Location location) {
-            if(location.getAccuracy() <= 5000) {    //!!!!!!!!!!!!!!!!!!
+            if(location.getAccuracy() <= 2000) {    //!!!!!!!!!!!!!!!!!!
                 Lat = location.getLatitude();
                 Lon = location.getLongitude();
                 bEP.setEnabled(true);
@@ -197,10 +204,60 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
      */
     @Override
     public void onMapReady(GoogleMap googleMap) {
+        //asynctask - ???
         mMap = googleMap;
         mMap.setMyLocationEnabled(true);
         mMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
         mMap.getUiSettings().setZoomControlsEnabled(true);
+    }
+
+    public void closeDrink(View view) {
+        InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+        imm.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(), InputMethodManager.HIDE_NOT_ALWAYS);
+        LinearLayout ll = (LinearLayout)findViewById(R.id.ll);
+        ll.setVisibility(View.GONE);
+    }
+
+    public void boozCalc(View view) {
+        Spinner spinner = (Spinner)findViewById(R.id.spinner);
+        EditText etMl = (EditText)findViewById(R.id.etMl);
+        float shot = (float) 0;
+        if(!etMl.getText().equals(null)) {
+            shot = Float.parseFloat(etMl.getText().toString());
+        }
+        switch (spinner.getSelectedItem().toString()){
+            case "Beer":
+                shot = (float) (shot * 0.07);
+                break;
+            case "Vine":
+                shot = (float) (shot * 0.17);
+                break;
+            case "Rum":
+                shot = (float) (shot * 0.37);
+                break;
+        }
+
+        boozLevel = boozLevel + shot;
+
+        tvDir.setText(spinner.getSelectedItem().toString()+" "+boozLevel);
+        InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+        imm.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(), InputMethodManager.HIDE_NOT_ALWAYS);
+        closeDrink(view);
+
+        if(boozLevel>100.0){
+            AlertDialog.Builder alertDialog = new AlertDialog.Builder(MapsActivity.this);
+            alertDialog.setTitle("STOP");
+            alertDialog.setMessage("You are drunk. Call taxi and go home");
+            alertDialog.setPositiveButton("Call screen", new DialogInterface.OnClickListener() {
+                public void onClick(DialogInterface dialog, int which) {
+                    Intent intent;
+                    intent = new Intent(Intent.ACTION_DIAL);
+                    intent.setData(Uri.parse("tel:" + loadTaxiNumber()));
+                    startActivity(intent);
+                }
+            });
+            alertDialog.show();
+        }
     }
 
     private class ParserTask extends AsyncTask<String, Integer, List<List<HashMap<String,String>>> > {
@@ -269,8 +326,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         @Override
         protected Void doInBackground(Void... params) {
-            startLatitude = 49.531643;
-            startLongitude = 25.604636;
             finishLatitude = 50.021817;
             finishLongitude = 19.827423;
 
@@ -419,6 +474,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     }
                 });
                 editTaxiNumber.show();
+                break;
+            case R.id.option4:
+                LinearLayout ll = (LinearLayout)findViewById(R.id.ll);
+                ll.setVisibility(View.VISIBLE);
+
                 break;
         }
         return super.onOptionsItemSelected(item);

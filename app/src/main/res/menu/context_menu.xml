@@ -16,6 +16,6 @@
         android:title="@string/menu_edit_taxi_number"/>
     <item
         android:id="@+id/option4"
-        android:icon="@android:drawable/ic_menu_agenda"
-        android:title="4444444"/>
+        android:icon="@android:drawable/btn_plus"
+        android:title="Alco counter"/>
 </menu>
