@@ -17,20 +17,19 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.provider.Settings;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentTransaction;
 import android.text.InputType;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
-import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.LinearLayout;
 import android.widget.Spinner;
-import android.widget.TextView;
 
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -56,21 +55,28 @@ import java.util.Locale;
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
 
     private GoogleMap mMap;
-    Button bEP;
-    Button bBMB;
-    TextView tvDir;
-    TextView tv1;
-    TextView tv2;
-    TextView tv3;
-    TextView tv4;
+
     String link = null;
     private LocationManager locationManager;
-    double Lat, startLatitude, finishLatitude;
-    double Lon, startLongitude, finishLongitude;
-    String geo_address, geo_city, geo_state, geo_country, test;
+    double Lat;
+    double startLatitude;
+    double finishLatitude;
+    double Lon;
+    double startLongitude;
+    double finishLongitude;
+    String geo_address, geo_city, geo_state, geo_country;
     SharedPreferences sPref;
     final String TAXI_NUMBER = "taxi number";
     float boozLevel = (float) 0;
+
+    Fragment_main fragmentMain;
+    Fragment_alco fragmentAlco;
+    FragmentTransaction fTrans;
+    /**
+     * ATTENTION: This was auto-generated to implement the App Indexing API.
+     * See https://g.co/AppIndexing/AndroidStudio for more information.
+     */
+    //private GoogleApiClient client;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -81,53 +87,15 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
 
-        bEP = (Button) findViewById(R.id.bEntryPoint);
-        bBMB = (Button) findViewById(R.id.bBringMeBack);
-        tvDir = (TextView) findViewById(R.id.tvDir);
-        tv1 = (TextView) findViewById(R.id.tv1);
-        tv2 = (TextView) findViewById(R.id.tv2);
-        tv3 = (TextView) findViewById(R.id.tv3);
-        tv4 = (TextView) findViewById(R.id.tv4);
-        bBMB.setEnabled(false);
-        bEP.setEnabled(false);
-        bBMB.setVisibility(View.GONE);
+        fragmentMain = new Fragment_main();
 
-        View.OnClickListener ocl = new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                switch (v.getId()){
-                    case R.id.bEntryPoint:
-                        bBMB.setEnabled(true);
-                        bBMB.setVisibility(View.VISIBLE);
-                        startLatitude=Lat;
-                        startLongitude=Lon;
-                        tv1.setText("LatS: " + startLatitude);
-                        tv2.setText("LonS: " + startLongitude);
-                        bEP.setEnabled(false);
-                        bEP.setVisibility(View.GONE);
-
-                        AddressEP adr = new AddressEP();
-                        adr.execute();
-
-                        break;
-
-                    case R.id.bBringMeBack:
-                        finishLatitude=Lat;
-                        finishLongitude=Lon;
-                        tv3.setText("LatS: " + finishLatitude);
-                        tv4.setText("LonS: " + finishLongitude);
-
-                        SendApi sendApi = new SendApi();
-                        sendApi.execute();
-
-                        break;
-                }
-            }
-        };
+        fTrans = getSupportFragmentManager().beginTransaction();
+        fTrans.add(R.id.fragment, fragmentMain);
+        fTrans.commit();
 
         locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
 
-        if(!locationManager.isProviderEnabled(android.location.LocationManager.GPS_PROVIDER )){
+        if (!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
             AlertDialog.Builder alertDialog = new AlertDialog.Builder(MapsActivity.this);
             alertDialog.setTitle("Check GPS settings");
             alertDialog.setMessage("GPS is not enabled. Do you want to go to settings menu?");
@@ -145,8 +113,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             alertDialog.show();
         }
 
-        bEP.setOnClickListener(ocl);
-        bBMB.setOnClickListener(ocl);
+        // ATTENTION: This was auto-generated to implement the App Indexing API.
+        // See https://g.co/AppIndexing/AndroidStudio for more information.
+        //client = new GoogleApiClient.Builder(this).addApi(AppIndex.API).build();
     }
 
     @Override
@@ -166,15 +135,17 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 1000 * 10, 10, locationListener);
     }
 
-    private LocationListener locationListener =new LocationListener() {
+    private LocationListener locationListener = new LocationListener() {
         @Override
         public void onLocationChanged(Location location) {
-            if(location.getAccuracy() <= 2000) {    //!!!!!!!!!!!!!!!!!!
+            if (location.getAccuracy() <= 2000) {    //!!!!!!!!!!!!!!!!!!
                 Lat = location.getLatitude();
                 Lon = location.getLongitude();
-                bEP.setEnabled(true);
+
+                Fragment fragment1;
+                fragment1 = getSupportFragmentManager().findFragmentById(R.id.fragment);
+                ((Button) fragment1.getView().findViewById(R.id.bEntryPoint)).setEnabled(true);
             }
-            tvDir.setText("Accuracy: " + location.getAccuracy());
         }
 
         @Override
@@ -204,7 +175,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
      */
     @Override
     public void onMapReady(GoogleMap googleMap) {
-        //asynctask - ???
         mMap = googleMap;
         mMap.setMyLocationEnabled(true);
         mMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
@@ -212,39 +182,43 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
     public void closeDrink(View view) {
-        InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-        imm.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(), InputMethodManager.HIDE_NOT_ALWAYS);
-        LinearLayout ll = (LinearLayout)findViewById(R.id.ll);
-        ll.setVisibility(View.GONE);
+        fragmentMain = new Fragment_main();
+        fTrans = getSupportFragmentManager().beginTransaction();
+        fTrans.replace(R.id.fragment, fragmentMain);
+        fTrans.commit();
+        FragmentManager fm = getSupportFragmentManager();
+        int count = fm.getBackStackEntryCount();
+        for(int i = 0; i < count; ++i) {
+            fm.popBackStack();
+        }
     }
 
     public void boozCalc(View view) {
-        Spinner spinner = (Spinner)findViewById(R.id.spinner);
-        EditText etMl = (EditText)findViewById(R.id.etMl);
+        Spinner spinner = (Spinner) findViewById(R.id.spinner);
+        EditText etMl = (EditText) findViewById(R.id.etMl);
         float shot = (float) 0;
-        if(!etMl.getText().equals(null)) {
+
+        if (etMl.getText().toString().trim().length() != 0) {
             shot = Float.parseFloat(etMl.getText().toString());
+            InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+            imm.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(), InputMethodManager.HIDE_NOT_ALWAYS);
         }
-        switch (spinner.getSelectedItem().toString()){
+        switch (spinner.getSelectedItem().toString()) {
             case "Beer":
-                shot = (float) (shot * 0.07);
+                shot = (float) (shot * 0.046);
                 break;
             case "Vine":
-                shot = (float) (shot * 0.17);
+                shot = (float) (shot * 0.16);
                 break;
             case "Rum":
-                shot = (float) (shot * 0.37);
+                shot = (float) (shot * 0.42);
                 break;
         }
 
         boozLevel = boozLevel + shot;
-
-        tvDir.setText(spinner.getSelectedItem().toString()+" "+boozLevel);
-        InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-        imm.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(), InputMethodManager.HIDE_NOT_ALWAYS);
         closeDrink(view);
 
-        if(boozLevel>100.0){
+        if (boozLevel > 100.0) {
             AlertDialog.Builder alertDialog = new AlertDialog.Builder(MapsActivity.this);
             alertDialog.setTitle("STOP");
             alertDialog.setMessage("You are drunk. Call taxi and go home");
@@ -260,7 +234,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }
     }
 
-    private class ParserTask extends AsyncTask<String, Integer, List<List<HashMap<String,String>>> > {
+    private class ParserTask extends AsyncTask<String, Integer, List<List<HashMap<String, String>>>> {
         // Parsing the data in non-ui thread
         @Override
         protected List<List<HashMap<String, String>>> doInBackground(String... jsonData) {
@@ -268,13 +242,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             JSONObject jObject;
             List<List<HashMap<String, String>>> routes = null;
 
-            try{
+            try {
                 jObject = new JSONObject(jsonData[0]);
                 DirectionsJSONParser parser = new DirectionsJSONParser();
 
                 // Starts parsing data
                 routes = parser.parse(jObject);
-            }catch(Exception e){
+            } catch (Exception e) {
                 e.printStackTrace();
             }
             return routes;
@@ -288,7 +262,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             PolylineOptions lineOptions = null;
 
             // Traversing through all the routes
-            for(int i=0;i<result.size();i++){
+            for (int i = 0; i < result.size(); i++) {
                 points = new ArrayList<LatLng>();
                 lineOptions = new PolylineOptions();
 
@@ -296,8 +270,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 List<HashMap<String, String>> path = result.get(i);
 
                 // Fetching all the points in i-th route
-                for(int j=0;j<path.size();j++){
-                    HashMap<String,String> point = path.get(j);
+                for (int j = 0; j < path.size(); j++) {
+                    HashMap<String, String> point = path.get(j);
 
                     double lat = Double.parseDouble(point.get("lat"));
                     double lng = Double.parseDouble(point.get("lng"));
@@ -317,7 +291,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }
     }
 
-    class SendApi extends AsyncTask<Void, Void, Void> {
+    public class SendApi extends AsyncTask<Void, Void, Void> {
 
         @Override
         protected void onPreExecute() {
@@ -361,11 +335,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             } catch (IOException e) {
                 e.printStackTrace();
             } finally {
-                if (connection != null){
+                if (connection != null) {
                     connection.disconnect();
                 }
                 try {
-                    if(reader != null) {
+                    if (reader != null) {
                         reader.close();
                     }
                 } catch (IOException e) {
@@ -383,7 +357,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }
     }
 
-    class AddressEP extends AsyncTask<Void, Void, Void> {
+    public class AddressEP extends AsyncTask<Void, Void, Void> {
 
         @Override
         protected void onPreExecute() {
@@ -420,7 +394,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     .position(latLng)
                     .title(geo_address);
             mMap.addMarker(markerOptions);
-            tvDir.setText(geo_address + "\n" + geo_city + "\n" + geo_state + "\n" + geo_country);
+            //tvDir.setText(geo_address + "\n" + geo_city + "\n" + geo_state + "\n" + geo_country);
         }
     }
 
@@ -462,7 +436,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 editTaxiNumber.setPositiveButton("OK", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        if(!input.getText().toString().equals("")) {
+                        if (!input.getText().toString().equals("")) {
                             saveTaxiNumber(input.getText().toString());
                         }
                     }
@@ -476,8 +450,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 editTaxiNumber.show();
                 break;
             case R.id.option4:
-                LinearLayout ll = (LinearLayout)findViewById(R.id.ll);
-                ll.setVisibility(View.VISIBLE);
+                fragmentAlco = new Fragment_alco();
+                fTrans = getSupportFragmentManager().beginTransaction();
+                fTrans.replace(R.id.fragment, fragmentAlco);
+                fTrans.addToBackStack(null);
+                fTrans.commit();
 
                 break;
         }
@@ -495,6 +472,20 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         SharedPreferences.Editor ed = sPref.edit();
         ed.putString(TAXI_NUMBER, inph);
         ed.commit();
+    }
+
+    public void fromFragmentEP(){
+        AddressEP adr = new AddressEP();
+        adr.execute();
+        startLatitude = Lat;
+        startLongitude = Lon;
+    }
+
+    public void fromFragmentBMB(){
+        SendApi sendApi = new SendApi();
+        sendApi.execute();
+        finishLatitude = Lat;
+        finishLongitude = Lon;
     }
 
 }

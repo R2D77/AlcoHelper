@@ -1,124 +1,24 @@
-<fragment xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:map="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/map"
-    android:name="com.google.android.gms.maps.SupportMapFragment"
-    android:layout_width="match_parent"
+<RelativeLayout
     android:layout_height="match_parent"
-    tools:context="com.fd2r.alcohelper.MapsActivity">
+    android:layout_width="match_parent"
+    xmlns:android="http://schemas.android.com/apk/res/android">
 
-        <LinearLayout
-            android:orientation="vertical"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content">
-
-            <TextView
-                android:id="@+id/tvDir"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Dir"/>
-
-            <TextView
-                android:id="@+id/tv1"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="LatS"/>
-
-            <TextView
-                android:id="@+id/tv2"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="LonS"/>
-
-            <TextView
-                android:id="@+id/tv3"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="LatF"/>
-
-            <TextView
-                android:id="@+id/tv4"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="LonF"/>
-
-        </LinearLayout>
-
-
-
-    <LinearLayout
-        android:id="@+id/ll"
-        android:orientation="vertical"
+    <fragment xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:map="http://schemas.android.com/apk/res-auto"
+        xmlns:tools="http://schemas.android.com/tools"
+        android:id="@+id/map"
+        android:name="com.google.android.gms.maps.SupportMapFragment"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:paddingTop="80dp"
-        android:background="@color/colorAccent"
-        android:visibility="gone"
-        android:clickable="true"
-        android:onClick="closeDrink">
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center_horizontal"
-            android:textSize="24dp"
-            android:textColor="@color/colorText"
-            android:text="@string/drink"/>
-        <Spinner
-            android:id="@+id/spinner"
-            android:layout_marginTop="15dp"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:entries="@array/drinklist"/>
+        tools:context="com.fd2r.alcohelper.MapsActivity">
+    </fragment>
 
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginLeft="10dp"
-            android:layout_marginRight="10dp">
-            <EditText
-                android:id="@+id/etMl"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="15dp"
-                android:inputType="number"
-                android:hint="@string/measure_alcohol"
-                android:layout_weight="9"/>
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textColor="@color/colorText"
-                android:text="@string/ml"
-                android:textSize="16dp"/>
-        </LinearLayout>
+    <fragment
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:name="com.fd2r.alcohelper.Fragment_main"
+        android:id="@+id/fragment"
+        android:layout_gravity="center_horizontal">
+    </fragment>
 
-
-        <Button
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="15dp"
-            android:layout_gravity="center_horizontal"
-            android:onClick="boozCalc"
-            android:text="@string/booz"/>
-    </LinearLayout>
-
-
-
-
-        <Button
-            android:id="@+id/bEntryPoint"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="bottom|center_horizontal"
-            android:text="@string/entry_point"
-            android:padding="10dp"/>
-
-        <Button
-            android:id="@+id/bBringMeBack"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="bottom|center_horizontal"
-            android:text="@string/bring_me_back"
-            android:padding="10dp"/>
-
-</fragment>
+</RelativeLayout>
